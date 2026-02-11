@@ -35,6 +35,12 @@ func New(baseURL string, opts ...Option) (*Client, error) {
 		opt(c)
 	}
 
+	// opts で追加した httpClient で CookieJar が nil で上書きされた場合の対策
+	if c.httpClient.Jar == nil {
+		jar, _ := cookiejar.New(nil)
+		c.httpClient.Jar = jar
+	}
+
 	return c, nil
 }
 

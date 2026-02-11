@@ -3,8 +3,8 @@ package libpuki
 import (
 	"errors"
 	"net/http"
-	"net/http/cookiejar"
 	"net/http/httptest"
+	"net/url"
 	"testing"
 )
 
@@ -46,10 +46,7 @@ func TestLogin(t *testing.T) {
 		ts := newAuthTestServer(t)
 		defer ts.Close()
 
-		jar, _ := cookiejar.New(nil)
-		hc := &http.Client{Jar: jar}
-
-		c, err := New(ts.URL, WithHTTPClient(hc), WithAuth("testuser", "testpass"))
+		c, err := New(ts.URL, WithHTTPClient(&http.Client{}), WithAuth("testuser", "testpass"))
 		if err != nil {
 			t.Fatalf("failed to create client: %v", err)
 		}
@@ -57,16 +54,27 @@ func TestLogin(t *testing.T) {
 		if err := c.Login(); err != nil {
 			t.Fatalf("Login() returned unexpected error: %v", err)
 		}
+
+		// Cookie が保存されたことを検証
+		tsURL, _ := url.Parse(ts.URL)
+		cookies := c.httpClient.Jar.Cookies(tsURL)
+		var found bool
+		for _, cookie := range cookies {
+			if cookie.Name == "PHPSESSID" {
+				found = true
+				break
+			}
+		}
+		if !found {
+			t.Error("PHPSESSID cookie not found after successful Login()")
+		}
 	})
 
 	t.Run("誤った認証情報でErrAuthFailedを返す", func(t *testing.T) {
 		ts := newAuthTestServer(t)
 		defer ts.Close()
 
-		jar, _ := cookiejar.New(nil)
-		hc := &http.Client{Jar: jar}
-
-		c, err := New(ts.URL, WithHTTPClient(hc), WithAuth("wrong", "creds"))
+		c, err := New(ts.URL, WithHTTPClient(&http.Client{}), WithAuth("wrong", "creds"))
 		if err != nil {
 			t.Fatalf("failed to create client: %v", err)
 		}
