@@ -51,3 +51,34 @@ func newTestServer(t *testing.T) *httptest.Server {
 		}
 	}))
 }
+
+// PukiWiki のログインフォームをモックする httptest.Server を返す
+func newAuthTestServer(t *testing.T) *httptest.Server {
+	t.Helper()
+	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost || r.URL.Query().Get("plugin") != "loginform" {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+
+		if err := r.ParseForm(); err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		username := r.FormValue("username")
+		password := r.FormValue("password")
+
+		if username == "testuser" && password == "testpass" {
+			http.SetCookie(w, &http.Cookie{
+				Name:  "PHPSESSID",
+				Value: "testsession",
+				Path:  "/",
+			})
+			http.Redirect(w, r, "/", http.StatusFound)
+			return
+		}
+
+		serveFixture(t, w, "testdata/login_failure.html")
+	}))
+}
