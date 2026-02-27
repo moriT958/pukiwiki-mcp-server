@@ -5,7 +5,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/moriT958/pukiwiki-mcp/libpuki"
+	"github.com/moriT958/pukiwiki-mcp"
 )
 
 func main() {
