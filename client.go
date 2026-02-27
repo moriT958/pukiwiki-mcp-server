@@ -13,6 +13,7 @@ type Client struct {
 	baseURL    string
 	username   string
 	password   string
+	scope      string
 }
 
 type Option func(*Client)
@@ -60,5 +61,11 @@ func WithAuth(username, password string) Option {
 	return func(c *Client) {
 		c.username = username
 		c.password = password
+	}
+}
+
+func WithScope(prefix string) Option {
+	return func(c *Client) {
+		c.scope = strings.TrimRight(prefix, "/")
 	}
 }

@@ -25,6 +25,12 @@ func newTestServer(t *testing.T) *httptest.Server {
 	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		q := r.URL.RawQuery
 
+		// cmd=list でページ一覧取得
+		if values, err := url.ParseQuery(q); err == nil && values.Get("cmd") == "list" {
+			serveFixture(t, w, "testdata/list_pages.html")
+			return
+		}
+
 		// cmd=source&page=<pagename> でソース取得
 		if values, err := url.ParseQuery(q); err == nil && values.Get("cmd") == "source" {
 			page := values.Get("page")
