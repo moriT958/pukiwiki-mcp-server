@@ -6,7 +6,7 @@ import (
 	"fmt"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
-	"github.com/moriT958/pukiwiki-mcp/libpuki"
+	"github.com/moriT958/pukiwiki-mcp"
 )
 
 type GetPageInfoInput struct {

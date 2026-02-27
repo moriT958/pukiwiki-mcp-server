@@ -4,7 +4,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/moriT958/pukiwiki-mcp/libpuki"
+	"github.com/moriT958/pukiwiki-mcp"
 )
 
 func TestListThenGetSource(t *testing.T) {
