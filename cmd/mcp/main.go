@@ -7,8 +7,8 @@ import (
 	"os"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
-	"github.com/moriT958/pukiwiki-mcp/internal/tools"
 	"github.com/moriT958/pukiwiki-mcp"
+	"github.com/moriT958/pukiwiki-mcp/internal/tools"
 )
 
 func main() {
