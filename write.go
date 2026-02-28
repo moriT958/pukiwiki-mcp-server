@@ -74,6 +74,25 @@ func (c *Client) postWrite(pageName, digest, content string) error {
 	return fmt.Errorf("write failed: unexpected status code %d", resp.StatusCode)
 }
 
+// 既存ページを上書き編集する
+func (c *Client) EditPage(pageName, content string) error {
+	if err := c.checkWriteScope(pageName); err != nil {
+		return err
+	}
+
+	digest, exists, err := c.getEditForm(pageName)
+	if err != nil {
+		return err
+	}
+
+	// ページが存在しない場合は ErrPageNotFound を返す
+	if !exists {
+		return ErrPageNotFound
+	}
+
+	return c.postWrite(pageName, digest, content)
+}
+
 // 新規ページを作成する
 func (c *Client) CreatePage(pageName, content string) error {
 	if err := c.checkWriteScope(pageName); err != nil {
