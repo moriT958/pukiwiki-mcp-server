@@ -31,6 +31,17 @@ func newTestServer(t *testing.T) *httptest.Server {
 			return
 		}
 
+		// cmd=search2&action=query で JSON 検索結果を返す
+		if values, err := url.ParseQuery(q); err == nil && values.Get("cmd") == "search2" && values.Get("action") == "query" {
+			switch values.Get("q") {
+			case "keyword", "keyword OR other":
+				serveFixture(t, w, "testdata/search_results.json")
+			default:
+				serveFixture(t, w, "testdata/search_no_results.json")
+			}
+			return
+		}
+
 		// cmd=source&page=<pagename> でソース取得
 		if values, err := url.ParseQuery(q); err == nil && values.Get("cmd") == "source" {
 			page := values.Get("page")

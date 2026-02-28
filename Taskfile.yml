@@ -35,3 +35,8 @@ tasks:
     desc: Run format
     cmds:
       - go fmt ./...
+
+  inspector:
+    desc: Run MCP inspector
+    cmds:
+      - npx @modelcontextprotocol/inspector
