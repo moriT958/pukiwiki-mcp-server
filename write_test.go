@@ -8,6 +8,79 @@ import (
 	"testing"
 )
 
+func TestEditPage(t *testing.T) {
+	t.Run("既存ページを編集できる", func(t *testing.T) {
+		var receivedForm url.Values
+		ts := newWriteTestServer(t, true, func(form url.Values) {
+			receivedForm = form
+		})
+		defer ts.Close()
+
+		c, err := New(ts.URL)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		if err := c.EditPage("existing-page", "* 更新内容\nコンテンツ"); err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if receivedForm.Get("cmd") != "edit" {
+			t.Errorf("cmd = %q, want %q", receivedForm.Get("cmd"), "edit")
+		}
+		if receivedForm.Get("write") != "true" {
+			t.Errorf("write = %q, want %q", receivedForm.Get("write"), "true")
+		}
+		if receivedForm.Get("msg") != "* 更新内容\nコンテンツ" {
+			t.Errorf("msg = %q, want %q", receivedForm.Get("msg"), "* 更新内容\nコンテンツ")
+		}
+	})
+
+	t.Run("存在しないページは ErrPageNotFound を返す", func(t *testing.T) {
+		ts := newWriteTestServer(t, false, func(form url.Values) {
+			t.Error("POST should not be called when page does not exist")
+		})
+		defer ts.Close()
+
+		c, err := New(ts.URL)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		err = c.EditPage("new-page", "内容")
+		if !errors.Is(err, ErrPageNotFound) {
+			t.Errorf("err = %v, want ErrPageNotFound", err)
+		}
+	})
+
+	t.Run("スコープ外は ErrOutOfScope を返す", func(t *testing.T) {
+		c, err := New("https://example.com", WithScope("scoped"))
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		err = c.EditPage("other/page", "内容")
+		if !errors.Is(err, ErrOutOfScope) {
+			t.Errorf("err = %v, want ErrOutOfScope", err)
+		}
+	})
+
+	t.Run("編集フォームの GET が HTTP エラーの場合はエラーを返す", func(t *testing.T) {
+		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusInternalServerError)
+		}))
+		defer ts.Close()
+
+		c, err := New(ts.URL)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		if err := c.EditPage("existing-page", "内容"); err == nil {
+			t.Error("expected error, got nil")
+		}
+	})
+}
+
 func TestCreatePage(t *testing.T) {
 	t.Run("新規ページを作成できる", func(t *testing.T) {
 		var receivedForm url.Values
