@@ -69,6 +69,33 @@ func newTestServer(t *testing.T) *httptest.Server {
 	}))
 }
 
+// PukiWiki の編集フォームと書き込みをモックする httptest.Server を返す
+func newWriteTestServer(t *testing.T, pageExists bool, onWrite func(url.Values)) *httptest.Server {
+	t.Helper()
+	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodGet {
+			if pageExists {
+				serveFixture(t, w, "testdata/edit_form_existing_page.html")
+			} else {
+				serveFixture(t, w, "testdata/edit_form_new_page.html")
+			}
+			return
+		}
+		if r.Method == http.MethodPost {
+			if err := r.ParseForm(); err != nil {
+				w.WriteHeader(http.StatusBadRequest)
+				return
+			}
+			if onWrite != nil {
+				onWrite(r.Form)
+			}
+			http.Redirect(w, r, "/", http.StatusFound)
+			return
+		}
+		w.WriteHeader(http.StatusMethodNotAllowed)
+	}))
+}
+
 // PukiWiki のログインフォームをモックする httptest.Server を返す
 func newAuthTestServer(t *testing.T) *httptest.Server {
 	t.Helper()
