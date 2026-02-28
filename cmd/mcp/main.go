@@ -48,6 +48,7 @@ func main() {
 	tools.RegisterListPages(s, client)
 	tools.RegisterGetPage(s, client)
 	tools.RegisterGetPageInfo(s, client)
+	tools.RegisterSearchPages(s, client)
 
 	if err := s.Run(context.Background(), &mcp.StdioTransport{}); err != nil {
 		fmt.Fprintf(os.Stderr, "server error: %v\n", err)
