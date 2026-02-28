@@ -3,6 +3,8 @@ package libpuki
 import "errors"
 
 var (
-	ErrPageNotFound = errors.New("page not found")
-	ErrAuthFailed   = errors.New("authentication failed")
+	ErrPageNotFound      = errors.New("page not found")
+	ErrAuthFailed        = errors.New("authentication failed")
+	ErrPageAlreadyExists = errors.New("page already exists")
+	ErrOutOfScope        = errors.New("page is outside the configured access scope")
 )
