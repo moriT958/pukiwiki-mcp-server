@@ -15,9 +15,9 @@ type SearchPagesInput struct {
 }
 
 type searchPagesOutput struct {
-	Query     string               `json:"query"`
-	MatchType string               `json:"match_type"`
-	Count     int                  `json:"count"`
+	Query     string                 `json:"query"`
+	MatchType string                 `json:"match_type"`
+	Count     int                    `json:"count"`
 	Results   []libpuki.SearchResult `json:"results"`
 }
 
