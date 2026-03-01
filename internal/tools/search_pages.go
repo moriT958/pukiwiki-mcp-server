@@ -3,7 +3,6 @@ package tools
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
@@ -29,18 +28,12 @@ func RegisterSearchPages(s *mcp.Server, p *auth.Provider) {
 		Description: "キーワードを含むページを検索し、ページ名・更新日時・本文を返す。match_type で AND/OR 検索を選択できる (Default: AND)。",
 	}, func(ctx context.Context, req *mcp.CallToolRequest, input SearchPagesInput) (*mcp.CallToolResult, any, error) {
 		if input.Query == "" {
-			return &mcp.CallToolResult{
-				Content: []mcp.Content{&mcp.TextContent{Text: "query is required"}},
-				IsError: true,
-			}, nil, nil
+			return errResult("query is required")
 		}
 
 		c, err := p.Get(ctx)
 		if err != nil {
-			return &mcp.CallToolResult{
-				Content: []mcp.Content{&mcp.TextContent{Text: fmt.Sprintf("auth error: %v", err)}},
-				IsError: true,
-			}, nil, nil
+			return errResult(fmt.Sprintf("auth error: %v", err))
 		}
 
 		matchType := libpuki.MatchAll
@@ -50,22 +43,7 @@ func RegisterSearchPages(s *mcp.Server, p *auth.Provider) {
 
 		results, err := c.SearchPages(input.Query, matchType)
 		if err != nil {
-			if errors.Is(err, libpuki.ErrSessionExpired) {
-				if resetErr := p.Reset(); resetErr != nil {
-					return &mcp.CallToolResult{
-						Content: []mcp.Content{&mcp.TextContent{Text: fmt.Sprintf("session expired but failed to clear credentials: %v. please retry.", resetErr)}},
-						IsError: true,
-					}, nil, nil
-				}
-				return &mcp.CallToolResult{
-					Content: []mcp.Content{&mcp.TextContent{Text: "session expired. setup wizard launched. please retry after login."}},
-					IsError: true,
-				}, nil, nil
-			}
-			return &mcp.CallToolResult{
-				Content: []mcp.Content{&mcp.TextContent{Text: fmt.Sprintf("search_pages failed: %v", err)}},
-				IsError: true,
-			}, nil, nil
+			return handlePukiwikiErr(p, err, "", "search_pages")
 		}
 
 		out, err := json.Marshal(searchPagesOutput{
@@ -75,10 +53,7 @@ func RegisterSearchPages(s *mcp.Server, p *auth.Provider) {
 			Results:   results,
 		})
 		if err != nil {
-			return &mcp.CallToolResult{
-				Content: []mcp.Content{&mcp.TextContent{Text: fmt.Sprintf("marshal failed: %v", err)}},
-				IsError: true,
-			}, nil, nil
+			return errResult(fmt.Sprintf("marshal failed: %v", err))
 		}
 
 		return &mcp.CallToolResult{

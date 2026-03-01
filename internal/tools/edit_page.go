@@ -2,11 +2,9 @@ package tools
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
-	libpuki "github.com/moriT958/pukiwiki-mcp"
 	"github.com/moriT958/pukiwiki-mcp/internal/auth"
 )
 
@@ -21,55 +19,19 @@ func RegisterEditPage(s *mcp.Server, p *auth.Provider) {
 		Description: "PukiWiki の既存ページを上書き編集する",
 	}, func(ctx context.Context, req *mcp.CallToolRequest, input EditPageInput) (*mcp.CallToolResult, any, error) {
 		if input.PageName == "" {
-			return &mcp.CallToolResult{
-				Content: []mcp.Content{&mcp.TextContent{Text: "page_name is required"}},
-				IsError: true,
-			}, nil, nil
+			return errResult("page_name is required")
 		}
 		if input.NewContent == "" {
-			return &mcp.CallToolResult{
-				Content: []mcp.Content{&mcp.TextContent{Text: "new_content is required"}},
-				IsError: true,
-			}, nil, nil
+			return errResult("new_content is required")
 		}
 
 		c, err := p.Get(ctx)
 		if err != nil {
-			return &mcp.CallToolResult{
-				Content: []mcp.Content{&mcp.TextContent{Text: fmt.Sprintf("auth error: %v", err)}},
-				IsError: true,
-			}, nil, nil
+			return errResult(fmt.Sprintf("auth error: %v", err))
 		}
 
 		if err := c.EditPage(input.PageName, input.NewContent); err != nil {
-			if errors.Is(err, libpuki.ErrSessionExpired) {
-				if resetErr := p.Reset(); resetErr != nil {
-					return &mcp.CallToolResult{
-						Content: []mcp.Content{&mcp.TextContent{Text: fmt.Sprintf("session expired but failed to clear credentials: %v. please retry.", resetErr)}},
-						IsError: true,
-					}, nil, nil
-				}
-				return &mcp.CallToolResult{
-					Content: []mcp.Content{&mcp.TextContent{Text: "session expired. setup wizard launched. please retry after login."}},
-					IsError: true,
-				}, nil, nil
-			}
-			if errors.Is(err, libpuki.ErrPageNotFound) {
-				return &mcp.CallToolResult{
-					Content: []mcp.Content{&mcp.TextContent{Text: fmt.Sprintf("page %q not found", input.PageName)}},
-					IsError: true,
-				}, nil, nil
-			}
-			if errors.Is(err, libpuki.ErrOutOfScope) {
-				return &mcp.CallToolResult{
-					Content: []mcp.Content{&mcp.TextContent{Text: fmt.Sprintf("page %q is outside the configured scope", input.PageName)}},
-					IsError: true,
-				}, nil, nil
-			}
-			return &mcp.CallToolResult{
-				Content: []mcp.Content{&mcp.TextContent{Text: fmt.Sprintf("edit_page failed: %v", err)}},
-				IsError: true,
-			}, nil, nil
+			return handlePukiwikiErr(p, err, input.PageName, "edit_page")
 		}
 
 		return &mcp.CallToolResult{

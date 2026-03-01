@@ -3,11 +3,9 @@ package tools
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
-	libpuki "github.com/moriT958/pukiwiki-mcp"
 	"github.com/moriT958/pukiwiki-mcp/internal/auth"
 )
 
@@ -20,30 +18,12 @@ func RegisterListPages(s *mcp.Server, p *auth.Provider) {
 	}, func(ctx context.Context, req *mcp.CallToolRequest, input ListPagesInput) (*mcp.CallToolResult, any, error) {
 		c, err := p.Get(ctx)
 		if err != nil {
-			return &mcp.CallToolResult{
-				Content: []mcp.Content{&mcp.TextContent{Text: fmt.Sprintf("auth error: %v", err)}},
-				IsError: true,
-			}, nil, nil
+			return errResult(fmt.Sprintf("auth error: %v", err))
 		}
 
 		pages, err := c.ListPages()
 		if err != nil {
-			if errors.Is(err, libpuki.ErrSessionExpired) {
-				if resetErr := p.Reset(); resetErr != nil {
-					return &mcp.CallToolResult{
-						Content: []mcp.Content{&mcp.TextContent{Text: fmt.Sprintf("session expired but failed to clear credentials: %v. please retry.", resetErr)}},
-						IsError: true,
-					}, nil, nil
-				}
-				return &mcp.CallToolResult{
-					Content: []mcp.Content{&mcp.TextContent{Text: "session expired. setup wizard launched. please retry after login."}},
-					IsError: true,
-				}, nil, nil
-			}
-			return &mcp.CallToolResult{
-				Content: []mcp.Content{&mcp.TextContent{Text: fmt.Sprintf("list_pages failed: %v", err)}},
-				IsError: true,
-			}, nil, nil
+			return handlePukiwikiErr(p, err, "", "list_pages")
 		}
 
 		result, err := json.Marshal(map[string]any{
@@ -51,10 +31,7 @@ func RegisterListPages(s *mcp.Server, p *auth.Provider) {
 			"count": len(pages),
 		})
 		if err != nil {
-			return &mcp.CallToolResult{
-				Content: []mcp.Content{&mcp.TextContent{Text: fmt.Sprintf("marshal failed: %v", err)}},
-				IsError: true,
-			}, nil, nil
+			return errResult(fmt.Sprintf("marshal failed: %v", err))
 		}
 
 		return &mcp.CallToolResult{
