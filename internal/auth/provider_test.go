@@ -6,13 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
-
-	"github.com/zalando/go-keyring"
 )
-
-func init() {
-	keyring.MockInit()
-}
 
 // ログイン成功をモックするテストサーバー
 func newLoginServer(t *testing.T) *httptest.Server {
@@ -36,7 +30,9 @@ func newLoginServer(t *testing.T) *httptest.Server {
 
 // Provider が libpuki.Client をキャッシュするか検証
 func TestProvider_Get_WithStoredCredentials(t *testing.T) {
-	keyring.MockInit()
+	tmp := t.TempDir()
+	t.Setenv("HOME", tmp)
+	t.Setenv("XDG_CONFIG_HOME", tmp)
 
 	srv := newLoginServer(t)
 	defer srv.Close()
@@ -68,9 +64,11 @@ func TestProvider_Get_WithStoredCredentials(t *testing.T) {
 	}
 }
 
-// Provider.Reset() で Keychain が削除されるか検証
+// Provider.Reset() で認証情報ファイルが削除されるか検証
 func TestProvider_Reset(t *testing.T) {
-	keyring.MockInit()
+	tmp := t.TempDir()
+	t.Setenv("HOME", tmp)
+	t.Setenv("XDG_CONFIG_HOME", tmp)
 
 	srv := newLoginServer(t)
 	defer srv.Close()

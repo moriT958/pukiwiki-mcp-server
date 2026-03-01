@@ -44,14 +44,14 @@ func (p *Provider) Get(ctx context.Context) (*pukiwiki.Client, error) {
 	return client, nil
 }
 
-// キャッシュ済みクライアントを破棄し Keychain の認証情報を削除する
+// キャッシュ済みクライアントを破棄し認証情報ファイルを削除する
 func (p *Provider) Reset() error {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
 	p.client = nil
 	if err := delete(); err != nil {
-		return fmt.Errorf("failed to delete credentials from keychain: %w", err)
+		return fmt.Errorf("failed to delete config file: %w", err)
 	}
 	return nil
 }
@@ -75,7 +75,7 @@ func (p *Provider) buildClient(ctx context.Context, cfg *config) (*pukiwiki.Clie
 	if err := client.Login(); err != nil {
 		if errors.Is(err, pukiwiki.ErrAuthFailed) {
 			if delErr := delete(); delErr != nil {
-				fmt.Fprintf(os.Stderr, "pukiwiki-mcp: failed to delete credentials from keychain: %v\n", delErr)
+				fmt.Fprintf(os.Stderr, "pukiwiki-mcp: failed to delete config file: %v\n", delErr)
 			}
 
 			newCfg, wizardErr := runcWizard(ctx)

@@ -6,13 +6,7 @@ import (
 	"net/url"
 	"strings"
 	"testing"
-
-	"github.com/zalando/go-keyring"
 )
-
-func init() {
-	keyring.MockInit()
-}
 
 func newTestMux(t *testing.T) http.Handler {
 	t.Helper()
@@ -45,7 +39,9 @@ func TestWizardHandler_GetSetup(t *testing.T) {
 
 // submit が正しいレスポンスを返すか検証
 func TestWizardHandler_ValidSubmit(t *testing.T) {
-	keyring.MockInit()
+	tmp := t.TempDir()
+	t.Setenv("HOME", tmp)
+	t.Setenv("XDG_CONFIG_HOME", tmp)
 
 	form := url.Values{
 		"url":      {"https://wiki.example.com"},

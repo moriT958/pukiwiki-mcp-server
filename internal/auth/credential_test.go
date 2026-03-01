@@ -3,16 +3,14 @@ package auth
 import (
 	"errors"
 	"testing"
-
-	"github.com/zalando/go-keyring"
 )
-
-func init() {
-	keyring.MockInit()
-}
 
 // 認証情報が正しく保存されるか検証
 func TestSaveAndLoad(t *testing.T) {
+	tmp := t.TempDir()
+	t.Setenv("HOME", tmp)
+	t.Setenv("XDG_CONFIG_HOME", tmp)
+
 	want := &config{
 		URL:      "https://wiki.example.com",
 		Username: "testuser",
@@ -37,7 +35,9 @@ func TestSaveAndLoad(t *testing.T) {
 
 // 認証情報が未登録の状態でロードすると ErrNotFound が返るか検証
 func TestLoad_NotFound(t *testing.T) {
-	keyring.MockInit()
+	tmp := t.TempDir()
+	t.Setenv("HOME", tmp)
+	t.Setenv("XDG_CONFIG_HOME", tmp)
 
 	_, err := load()
 	if !errors.Is(err, ErrNotFound) {
@@ -47,6 +47,10 @@ func TestLoad_NotFound(t *testing.T) {
 
 // 認証情報の削除後は ErrNotFound が返るか検証
 func TestDelete(t *testing.T) {
+	tmp := t.TempDir()
+	t.Setenv("HOME", tmp)
+	t.Setenv("XDG_CONFIG_HOME", tmp)
+
 	cfg := &config{URL: "https://wiki.example.com", Username: "u", Password: "p"}
 	if err := Save(cfg); err != nil {
 		t.Fatalf("Save() error = %v", err)
@@ -64,17 +68,21 @@ func TestDelete(t *testing.T) {
 
 // 存在しないエントリを削除してもエラーとして扱わない
 func TestDelete_NotFound(t *testing.T) {
-	keyring.MockInit()
+	tmp := t.TempDir()
+	t.Setenv("HOME", tmp)
+	t.Setenv("XDG_CONFIG_HOME", tmp)
 
 	if err := delete(); err != nil {
-		t.Errorf("Delete() on empty keychain error = %v, want nil", err)
+		t.Errorf("Delete() on empty config error = %v, want nil", err)
 	}
 }
 
 // TODO: これは仕様的にどうなの？ (Scope は必須でもいいかも)
 // Scope 未指定の場合は空で保存されるか検証
 func TestSave_NoScope(t *testing.T) {
-	keyring.MockInit()
+	tmp := t.TempDir()
+	t.Setenv("HOME", tmp)
+	t.Setenv("XDG_CONFIG_HOME", tmp)
 
 	want := &config{
 		URL:      "https://wiki.example.com",
