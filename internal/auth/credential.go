@@ -16,7 +16,7 @@ type config struct {
 	Scope    string `json:"scope,omitempty"`
 }
 
-const appDirName = "pukiwiki-mcp"
+const appDirName = "PukiwikiMCP"
 const configFileName = "config.json"
 
 var (
