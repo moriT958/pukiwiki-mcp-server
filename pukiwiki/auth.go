@@ -1,4 +1,4 @@
-package libpuki
+package pukiwiki
 
 import (
 	"fmt"

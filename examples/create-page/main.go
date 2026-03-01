@@ -6,18 +6,18 @@ import (
 	"log"
 	"os"
 
-	libpuki "github.com/moriT958/pukiwiki-mcp"
+	"github.com/moriT958/pukiwiki-mcp/pukiwiki"
 )
 
 func main() {
-	pukiwiki := os.Getenv("PUKIWIKI_URL")
+	pukiwikiURL := os.Getenv("PUKIWIKI_URL")
 	user := os.Getenv("PUKIWIKI_USER")
 	pass := os.Getenv("PUKIWIKI_PASS")
 	scope := os.Getenv("PUKIWIKI_SCOPE")
 
-	client, err := libpuki.New(pukiwiki,
-		libpuki.WithAuth(user, pass),
-		libpuki.WithScope(scope),
+	client, err := pukiwiki.New(pukiwikiURL,
+		pukiwiki.WithAuth(user, pass),
+		pukiwiki.WithScope(scope),
 	)
 	if err != nil {
 		log.Fatalf("Failed to init pukiwiki client: %v", err)
@@ -31,10 +31,10 @@ func main() {
 	content := "* 見出し\n\nページの本文です。\n"
 
 	if err := client.CreatePage(pageName, content); err != nil {
-		if errors.Is(err, libpuki.ErrPageAlreadyExists) {
+		if errors.Is(err, pukiwiki.ErrPageAlreadyExists) {
 			log.Fatalf("Page %q already exists", pageName)
 		}
-		if errors.Is(err, libpuki.ErrOutOfScope) {
+		if errors.Is(err, pukiwiki.ErrOutOfScope) {
 			log.Fatalf("Page %q is outside the configured scope", pageName)
 		}
 		log.Fatalf("Failed to create page: %v", err)

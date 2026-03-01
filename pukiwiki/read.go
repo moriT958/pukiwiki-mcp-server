@@ -1,4 +1,4 @@
-package libpuki
+package pukiwiki
 
 import (
 	"fmt"
@@ -31,7 +31,17 @@ func (c *Client) fetchDocument(rawURL string) (*goquery.Document, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse HTML: %w", err)
 	}
+
+	if isLoginPage(doc) {
+		return nil, ErrSessionExpired
+	}
+
 	return doc, nil
+}
+
+// isLoginPage はレスポンス HTML にログインフォームが含まれるか確認する
+func isLoginPage(doc *goquery.Document) bool {
+	return doc.Find(`input[name="username"]`).Length() > 0
 }
 
 // PukiWiki のソース表示ページから取得する

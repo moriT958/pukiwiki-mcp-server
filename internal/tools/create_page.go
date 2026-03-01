@@ -2,11 +2,10 @@ package tools
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
-	libpuki "github.com/moriT958/pukiwiki-mcp"
+	"github.com/moriT958/pukiwiki-mcp/internal/auth"
 )
 
 type CreatePageInput struct {
@@ -14,42 +13,26 @@ type CreatePageInput struct {
 	Content  string `json:"content"   jsonschema:"Wiki source content for the new page"`
 }
 
-func RegisterCreatePage(s *mcp.Server, c *libpuki.Client) {
+func RegisterCreatePage(s *mcp.Server, p *auth.Provider) {
 	mcp.AddTool(s, &mcp.Tool{
 		Name:        "create_page",
 		Description: "PukiWiki に新規ページを作成する",
 	}, func(ctx context.Context, req *mcp.CallToolRequest, input CreatePageInput) (*mcp.CallToolResult, any, error) {
 		if input.PageName == "" {
-			return &mcp.CallToolResult{
-				Content: []mcp.Content{&mcp.TextContent{Text: "page_name is required"}},
-				IsError: true,
-			}, nil, nil
+			return errResult("page_name is required")
 		}
 		if input.Content == "" {
-			return &mcp.CallToolResult{
-				Content: []mcp.Content{&mcp.TextContent{Text: "content is required"}},
-				IsError: true,
-			}, nil, nil
+			return errResult("content is required")
 		}
 
-		err := c.CreatePage(input.PageName, input.Content)
+		c, err := p.Get(ctx)
 		if err != nil {
-			if errors.Is(err, libpuki.ErrPageAlreadyExists) {
-				return &mcp.CallToolResult{
-					Content: []mcp.Content{&mcp.TextContent{Text: fmt.Sprintf("page %q already exists", input.PageName)}},
-					IsError: true,
-				}, nil, nil
-			}
-			if errors.Is(err, libpuki.ErrOutOfScope) {
-				return &mcp.CallToolResult{
-					Content: []mcp.Content{&mcp.TextContent{Text: fmt.Sprintf("page %q is outside the configured scope", input.PageName)}},
-					IsError: true,
-				}, nil, nil
-			}
-			return &mcp.CallToolResult{
-				Content: []mcp.Content{&mcp.TextContent{Text: fmt.Sprintf("create_page failed: %v", err)}},
-				IsError: true,
-			}, nil, nil
+			return errResult(fmt.Sprintf("auth error: %v", err))
+		}
+
+		err = c.CreatePage(input.PageName, input.Content)
+		if err != nil {
+			return handlePukiwikiErr(p, err, input.PageName, "create_page")
 		}
 
 		return &mcp.CallToolResult{

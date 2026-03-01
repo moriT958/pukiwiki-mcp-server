@@ -17,9 +17,9 @@ tasks:
       - lint
 
   build:
-    desc: Build
+    desc: Build Pukiwiki MCP
     cmds:
-      - go build ./...
+      - go build -o pukiwiki-mcp ./cmd/mcp/main.go
 
   test:
     desc: Run all tests

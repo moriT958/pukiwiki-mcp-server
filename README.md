@@ -1,5 +1,11 @@
 # PukiWiki MCP Server
 
+## Build
+
+```bash
+task build
+```
+
 ## How to setting
 
 edit `~/Library/Application\ Support/Claude/claude_desktop_config.json`
@@ -8,13 +14,18 @@ edit `~/Library/Application\ Support/Claude/claude_desktop_config.json`
 {
   "mcpServers": {
     "pukiwiki": {
-      "command": "/path/to/pukiwiki-mcp-binary",
-      "env": {
-        "PUKIWIKI_URL": "https://your-wiki.example.jp",
-        "PUKIWIKI_USER": "user",
-        "PUKIWIKI_PASS": "pass"
-      }
+      "command": "/path/to/your/pukiwiki-mcp-binary"
     }
   }
 }
 ```
+
+## Go Pukiwiki package
+
+```bash
+go get github.com/moriT958/pukiwiki-mcp/pukiwiki
+```
+
+### Usage
+
+[examples](/examples)

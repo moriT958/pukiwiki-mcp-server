@@ -1,4 +1,4 @@
-package libpuki
+package pukiwiki
 
 import (
 	"fmt"
@@ -38,6 +38,10 @@ func (c *Client) getEditForm(pageName string) (digest string, exists bool, err e
 	doc, err := goquery.NewDocumentFromReader(resp.Body)
 	if err != nil {
 		return "", false, fmt.Errorf("failed to parse edit form: %w", err)
+	}
+
+	if isLoginPage(doc) {
+		return "", false, ErrSessionExpired
 	}
 
 	digest, ok := doc.Find(`input[name="digest"]`).Attr("value")

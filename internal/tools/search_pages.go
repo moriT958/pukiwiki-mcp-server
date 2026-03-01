@@ -6,7 +6,8 @@ import (
 	"fmt"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
-	libpuki "github.com/moriT958/pukiwiki-mcp"
+	"github.com/moriT958/pukiwiki-mcp/internal/auth"
+	"github.com/moriT958/pukiwiki-mcp/pukiwiki"
 )
 
 type SearchPagesInput struct {
@@ -15,35 +16,34 @@ type SearchPagesInput struct {
 }
 
 type searchPagesOutput struct {
-	Query     string                 `json:"query"`
-	MatchType string                 `json:"match_type"`
-	Count     int                    `json:"count"`
-	Results   []libpuki.SearchResult `json:"results"`
+	Query     string                  `json:"query"`
+	MatchType string                  `json:"match_type"`
+	Count     int                     `json:"count"`
+	Results   []pukiwiki.SearchResult `json:"results"`
 }
 
-func RegisterSearchPages(s *mcp.Server, c *libpuki.Client) {
+func RegisterSearchPages(s *mcp.Server, p *auth.Provider) {
 	mcp.AddTool(s, &mcp.Tool{
 		Name:        "search_pages",
 		Description: "キーワードを含むページを検索し、ページ名・更新日時・本文を返す。match_type で AND/OR 検索を選択できる (Default: AND)。",
 	}, func(ctx context.Context, req *mcp.CallToolRequest, input SearchPagesInput) (*mcp.CallToolResult, any, error) {
 		if input.Query == "" {
-			return &mcp.CallToolResult{
-				Content: []mcp.Content{&mcp.TextContent{Text: "query is required"}},
-				IsError: true,
-			}, nil, nil
+			return errResult("query is required")
 		}
 
-		matchType := libpuki.MatchAll
-		if input.MatchType == string(libpuki.MatchAny) {
-			matchType = libpuki.MatchAny
+		c, err := p.Get(ctx)
+		if err != nil {
+			return errResult(fmt.Sprintf("auth error: %v", err))
+		}
+
+		matchType := pukiwiki.MatchAll
+		if input.MatchType == string(pukiwiki.MatchAny) {
+			matchType = pukiwiki.MatchAny
 		}
 
 		results, err := c.SearchPages(input.Query, matchType)
 		if err != nil {
-			return &mcp.CallToolResult{
-				Content: []mcp.Content{&mcp.TextContent{Text: fmt.Sprintf("search_pages failed: %v", err)}},
-				IsError: true,
-			}, nil, nil
+			return handlePukiwikiErr(p, err, "", "search_pages")
 		}
 
 		out, err := json.Marshal(searchPagesOutput{
@@ -53,10 +53,7 @@ func RegisterSearchPages(s *mcp.Server, c *libpuki.Client) {
 			Results:   results,
 		})
 		if err != nil {
-			return &mcp.CallToolResult{
-				Content: []mcp.Content{&mcp.TextContent{Text: fmt.Sprintf("marshal failed: %v", err)}},
-				IsError: true,
-			}, nil, nil
+			return errResult(fmt.Sprintf("marshal failed: %v", err))
 		}
 
 		return &mcp.CallToolResult{
