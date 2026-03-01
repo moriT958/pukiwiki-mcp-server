@@ -7,6 +7,7 @@ import (
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	libpuki "github.com/moriT958/pukiwiki-mcp"
+	"github.com/moriT958/pukiwiki-mcp/internal/auth"
 )
 
 type CreatePageInput struct {
@@ -14,7 +15,7 @@ type CreatePageInput struct {
 	Content  string `json:"content"   jsonschema:"Wiki source content for the new page"`
 }
 
-func RegisterCreatePage(s *mcp.Server, c *libpuki.Client) {
+func RegisterCreatePage(s *mcp.Server, p *auth.Provider) {
 	mcp.AddTool(s, &mcp.Tool{
 		Name:        "create_page",
 		Description: "PukiWiki に新規ページを作成する",
@@ -32,8 +33,28 @@ func RegisterCreatePage(s *mcp.Server, c *libpuki.Client) {
 			}, nil, nil
 		}
 
-		err := c.CreatePage(input.PageName, input.Content)
+		c, err := p.Get(ctx)
 		if err != nil {
+			return &mcp.CallToolResult{
+				Content: []mcp.Content{&mcp.TextContent{Text: fmt.Sprintf("auth error: %v", err)}},
+				IsError: true,
+			}, nil, nil
+		}
+
+		err = c.CreatePage(input.PageName, input.Content)
+		if err != nil {
+			if errors.Is(err, libpuki.ErrSessionExpired) {
+				if resetErr := p.Reset(); resetErr != nil {
+					return &mcp.CallToolResult{
+						Content: []mcp.Content{&mcp.TextContent{Text: fmt.Sprintf("session expired but failed to clear credentials: %v. please retry.", resetErr)}},
+						IsError: true,
+					}, nil, nil
+				}
+				return &mcp.CallToolResult{
+					Content: []mcp.Content{&mcp.TextContent{Text: "session expired. setup wizard launched. please retry after login."}},
+					IsError: true,
+				}, nil, nil
+			}
 			if errors.Is(err, libpuki.ErrPageAlreadyExists) {
 				return &mcp.CallToolResult{
 					Content: []mcp.Content{&mcp.TextContent{Text: fmt.Sprintf("page %q already exists", input.PageName)}},

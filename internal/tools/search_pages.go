@@ -3,10 +3,12 @@ package tools
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	libpuki "github.com/moriT958/pukiwiki-mcp"
+	"github.com/moriT958/pukiwiki-mcp/internal/auth"
 )
 
 type SearchPagesInput struct {
@@ -21,7 +23,7 @@ type searchPagesOutput struct {
 	Results   []libpuki.SearchResult `json:"results"`
 }
 
-func RegisterSearchPages(s *mcp.Server, c *libpuki.Client) {
+func RegisterSearchPages(s *mcp.Server, p *auth.Provider) {
 	mcp.AddTool(s, &mcp.Tool{
 		Name:        "search_pages",
 		Description: "キーワードを含むページを検索し、ページ名・更新日時・本文を返す。match_type で AND/OR 検索を選択できる (Default: AND)。",
@@ -33,6 +35,14 @@ func RegisterSearchPages(s *mcp.Server, c *libpuki.Client) {
 			}, nil, nil
 		}
 
+		c, err := p.Get(ctx)
+		if err != nil {
+			return &mcp.CallToolResult{
+				Content: []mcp.Content{&mcp.TextContent{Text: fmt.Sprintf("auth error: %v", err)}},
+				IsError: true,
+			}, nil, nil
+		}
+
 		matchType := libpuki.MatchAll
 		if input.MatchType == string(libpuki.MatchAny) {
 			matchType = libpuki.MatchAny
@@ -40,6 +50,18 @@ func RegisterSearchPages(s *mcp.Server, c *libpuki.Client) {
 
 		results, err := c.SearchPages(input.Query, matchType)
 		if err != nil {
+			if errors.Is(err, libpuki.ErrSessionExpired) {
+				if resetErr := p.Reset(); resetErr != nil {
+					return &mcp.CallToolResult{
+						Content: []mcp.Content{&mcp.TextContent{Text: fmt.Sprintf("session expired but failed to clear credentials: %v. please retry.", resetErr)}},
+						IsError: true,
+					}, nil, nil
+				}
+				return &mcp.CallToolResult{
+					Content: []mcp.Content{&mcp.TextContent{Text: "session expired. setup wizard launched. please retry after login."}},
+					IsError: true,
+				}, nil, nil
+			}
 			return &mcp.CallToolResult{
 				Content: []mcp.Content{&mcp.TextContent{Text: fmt.Sprintf("search_pages failed: %v", err)}},
 				IsError: true,

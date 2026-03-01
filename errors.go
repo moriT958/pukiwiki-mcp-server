@@ -7,4 +7,5 @@ var (
 	ErrAuthFailed        = errors.New("authentication failed")
 	ErrPageAlreadyExists = errors.New("page already exists")
 	ErrOutOfScope        = errors.New("page is outside the configured access scope")
+	ErrSessionExpired    = errors.New("session expired, re-authentication required")
 )

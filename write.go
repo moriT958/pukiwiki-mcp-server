@@ -40,6 +40,10 @@ func (c *Client) getEditForm(pageName string) (digest string, exists bool, err e
 		return "", false, fmt.Errorf("failed to parse edit form: %w", err)
 	}
 
+	if isLoginPage(doc) {
+		return "", false, ErrSessionExpired
+	}
+
 	digest, ok := doc.Find(`input[name="digest"]`).Attr("value")
 	if !ok || digest == "" {
 		return "", false, fmt.Errorf("digest field not found in edit form")
