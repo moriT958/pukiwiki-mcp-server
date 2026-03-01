@@ -5,8 +5,8 @@ import (
 	"fmt"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
-	libpuki "github.com/moriT958/pukiwiki-mcp"
 	"github.com/moriT958/pukiwiki-mcp/internal/auth"
+	"github.com/moriT958/pukiwiki-mcp/pukiwiki"
 )
 
 // MCP Tool のエラー結果を生成する
@@ -19,16 +19,16 @@ func errResult(text string) (*mcp.CallToolResult, any, error) {
 
 func handlePukiwikiErr(p *auth.Provider, err error, pageName, toolName string) (*mcp.CallToolResult, any, error) {
 	switch {
-	case errors.Is(err, libpuki.ErrSessionExpired):
+	case errors.Is(err, pukiwiki.ErrSessionExpired):
 		if resetErr := p.Reset(); resetErr != nil {
 			return errResult(fmt.Sprintf("session expired but failed to clear credentials: %v. please retry.", resetErr))
 		}
 		return errResult("session expired. setup wizard launched. please retry after login.")
-	case errors.Is(err, libpuki.ErrPageNotFound):
+	case errors.Is(err, pukiwiki.ErrPageNotFound):
 		return errResult(fmt.Sprintf("page %q not found", pageName))
-	case errors.Is(err, libpuki.ErrPageAlreadyExists):
+	case errors.Is(err, pukiwiki.ErrPageAlreadyExists):
 		return errResult(fmt.Sprintf("page %q already exists", pageName))
-	case errors.Is(err, libpuki.ErrOutOfScope):
+	case errors.Is(err, pukiwiki.ErrOutOfScope):
 		return errResult(fmt.Sprintf("page %q is outside the configured scope", pageName))
 	default:
 		return errResult(fmt.Sprintf("%s failed: %v", toolName, err))

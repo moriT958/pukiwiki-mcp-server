@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/moriT958/pukiwiki-mcp"
+	"github.com/moriT958/pukiwiki-mcp/pukiwiki"
 )
 
 func main() {
-	client, err := libpuki.New("https://base-url.jp",
-		libpuki.WithAuth("username", "password"),
+	client, err := pukiwiki.New("https://base-url.jp",
+		pukiwiki.WithAuth("username", "password"),
 	)
 	if err != nil {
 		log.Fatalf("Failed to init pukiwiki client: %v", err)

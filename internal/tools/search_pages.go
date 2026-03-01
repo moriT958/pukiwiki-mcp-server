@@ -6,8 +6,8 @@ import (
 	"fmt"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
-	libpuki "github.com/moriT958/pukiwiki-mcp"
 	"github.com/moriT958/pukiwiki-mcp/internal/auth"
+	"github.com/moriT958/pukiwiki-mcp/pukiwiki"
 )
 
 type SearchPagesInput struct {
@@ -16,10 +16,10 @@ type SearchPagesInput struct {
 }
 
 type searchPagesOutput struct {
-	Query     string                 `json:"query"`
-	MatchType string                 `json:"match_type"`
-	Count     int                    `json:"count"`
-	Results   []libpuki.SearchResult `json:"results"`
+	Query     string                  `json:"query"`
+	MatchType string                  `json:"match_type"`
+	Count     int                     `json:"count"`
+	Results   []pukiwiki.SearchResult `json:"results"`
 }
 
 func RegisterSearchPages(s *mcp.Server, p *auth.Provider) {
@@ -36,9 +36,9 @@ func RegisterSearchPages(s *mcp.Server, p *auth.Provider) {
 			return errResult(fmt.Sprintf("auth error: %v", err))
 		}
 
-		matchType := libpuki.MatchAll
-		if input.MatchType == string(libpuki.MatchAny) {
-			matchType = libpuki.MatchAny
+		matchType := pukiwiki.MatchAll
+		if input.MatchType == string(pukiwiki.MatchAny) {
+			matchType = pukiwiki.MatchAny
 		}
 
 		results, err := c.SearchPages(input.Query, matchType)

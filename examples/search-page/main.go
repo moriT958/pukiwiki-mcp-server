@@ -5,18 +5,18 @@ import (
 	"log"
 	"os"
 
-	libpuki "github.com/moriT958/pukiwiki-mcp"
+	"github.com/moriT958/pukiwiki-mcp/pukiwiki"
 )
 
 func main() {
-	pukiwiki := os.Getenv("PUKIWIKI_URL")
+	pukiwikiURL := os.Getenv("PUKIWIKI_URL")
 	user := os.Getenv("PUKIWIKI_USER")
 	pass := os.Getenv("PUKIWIKI_PASS")
 	scope := os.Getenv("PUKIWIKI_SCOPE")
 
-	client, err := libpuki.New(pukiwiki,
-		libpuki.WithAuth(user, pass),
-		libpuki.WithScope(scope),
+	client, err := pukiwiki.New(pukiwikiURL,
+		pukiwiki.WithAuth(user, pass),
+		pukiwiki.WithScope(scope),
 	)
 	if err != nil {
 		log.Fatalf("Failed to init pukiwiki client: %v", err)
@@ -27,7 +27,7 @@ func main() {
 	}
 
 	// AND 検索
-	results, err := client.SearchPages("word1 word2", libpuki.MatchAll)
+	results, err := client.SearchPages("word1 word2", pukiwiki.MatchAll)
 	if err != nil {
 		log.Fatalf("Failed to search pages: %v", err)
 	}
@@ -38,7 +38,7 @@ func main() {
 	}
 
 	// OR 検索
-	results, err = client.SearchPages("word1 word2", libpuki.MatchAny)
+	results, err = client.SearchPages("word1 word2", pukiwiki.MatchAny)
 	if err != nil {
 		log.Fatalf("Failed to search pages: %v", err)
 	}
