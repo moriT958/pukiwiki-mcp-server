@@ -1,5 +1,7 @@
 # PukiWiki MCP Server
 
+Support MacOS
+
 ## Build
 
 ```bash
