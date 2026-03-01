@@ -1,8 +1,6 @@
 # PukiWiki MCP Server
 
-- Support 
-  - MacOS (認証情報の保存に MacOS Keychain を使用します)
-  - リモート MCP は未対応なため、ChatGPT ではまだ利用出ません。
+Pukiwiki (f-lab) のローカル MCP サーバー
 
 ## Build
 
@@ -36,5 +34,4 @@ go get github.com/moriT958/pukiwiki-mcp/pukiwiki
 
 ## TODO
 
-- MacOS 以外もサポート
-- リモート MCP
+- (要検討) リモート MCP
