@@ -1,8 +1,8 @@
 # PukiWiki MCP Server
 
-Support MacOS (認証情報の保存に MacOS Keychain を使用します)
-
-リモート MCP は未対応なため、ChatGPT ではまだ利用出ません。
+- Support 
+  - MacOS (認証情報の保存に MacOS Keychain を使用します)
+  - リモート MCP は未対応なため、ChatGPT ではまだ利用出ません。
 
 ## Build
 
