@@ -7,17 +7,17 @@ import (
 	"os"
 	"sync"
 
-	"github.com/moriT958/pukiwiki-mcp/pukiwiki"
+	"github.com/moriT958/libpukiwiki"
 )
 
 // 認証済みの pukiwiki.Client を保持する
 type Provider struct {
 	mu     sync.Mutex
-	client *pukiwiki.Client
+	client *libpukiwiki.Client
 }
 
 // 認証済みの pukiwiki.Client を返す
-func (p *Provider) Get(ctx context.Context) (*pukiwiki.Client, error) {
+func (p *Provider) Get(ctx context.Context) (*libpukiwiki.Client, error) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
@@ -57,23 +57,23 @@ func (p *Provider) Reset() error {
 }
 
 // Config から pukiwiki.Client を生成してログインする
-func (p *Provider) buildClient(ctx context.Context, cfg *config) (*pukiwiki.Client, error) {
-	opts := []pukiwiki.Option{
-		pukiwiki.WithAuth(cfg.Username, cfg.Password),
+func (p *Provider) buildClient(ctx context.Context, cfg *config) (*libpukiwiki.Client, error) {
+	opts := []libpukiwiki.Option{
+		libpukiwiki.WithAuth(cfg.Username, cfg.Password),
 	}
 
 	// TODO: Scope 設定は必須にするか検討
 	if cfg.Scope != "" {
-		opts = append(opts, pukiwiki.WithScope(cfg.Scope))
+		opts = append(opts, libpukiwiki.WithScope(cfg.Scope))
 	}
 
-	client, err := pukiwiki.New(cfg.URL, opts...)
+	client, err := libpukiwiki.New(cfg.URL, opts...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create client: %w", err)
 	}
 
 	if err := client.Login(); err != nil {
-		if errors.Is(err, pukiwiki.ErrAuthFailed) {
+		if errors.Is(err, libpukiwiki.ErrAuthFailed) {
 			if delErr := delete(); delErr != nil {
 				fmt.Fprintf(os.Stderr, "pukiwiki-mcp: failed to delete config file: %v\n", delErr)
 			}
